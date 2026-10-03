@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/paravkaushal/k8s-egress-policy-enforcer/internal/audit"
 	"github.com/paravkaushal/k8s-egress-policy-enforcer/internal/policy"
 )
 
@@ -20,4 +21,5 @@ func main() {
 	}
 
 	_ = policy.NewEngine(cfg)
+	_ = audit.New(os.Stdout)
 }
