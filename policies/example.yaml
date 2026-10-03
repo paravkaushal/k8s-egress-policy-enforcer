@@ -1,0 +1,14 @@
+policies:
+  - workload: payment-service
+    destination: api.github.com
+    methods: [GET]
+    effect: allow
+
+  - workload: payment-service
+    destination: api.slack.com
+    methods: [POST]
+    effect: allow
+
+  - workload: payment-service
+    destination: "*"
+    effect: deny
