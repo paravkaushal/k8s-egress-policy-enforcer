@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/paravkaushal/k8s-egress-policy-enforcer/internal/audit"
 	"github.com/paravkaushal/k8s-egress-policy-enforcer/internal/policy"
@@ -15,7 +19,6 @@ import (
 const PORT = ":8080"
 
 func main() {
-	fmt.Println("Hello World")
 	policyFile := flag.String("policy-file", "policies/example.yaml", "path to the policy YAML/JSON file")
 	flag.Parse()
 	cfg, err := policy.Load(*policyFile)
@@ -36,9 +39,23 @@ func main() {
 		Handler: mux,
 	}
 
-	if err := srv.ListenAndServe(); err != nil {
-		slog.Error("server error", "error", err)
-		os.Exit(1)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		slog.Info("enforcer listening", "addr", PORT, "policy_file", *policyFile, "policy_count", len(cfg.Policies))
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("server error", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	<-ctx.Done()
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		slog.Error("graceful shutdown failed", "error", err)
 	}
 
 }

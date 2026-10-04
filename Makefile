@@ -6,8 +6,8 @@ IMAGE := k8s-egress-policy-enforcer
 build:
 	go build -o bin/$(BINARY) ./cmd/enforcer
 
-run:
-	go run ./cmd/enforcer
+run: build
+	./bin/$(BINARY)
 
 test:
 	go test ./...
