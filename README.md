@@ -64,3 +64,7 @@ This README covers the basics; the rest of the detail lives in [docs/](docs):
   scoring algorithm, and how ties/no-matches are resolved.
 - [Example Requests](docs/EXAMPLES.md) - `curl` walkthroughs of allow/deny/error paths and the
   resulting audit log lines.
+- [Design Decisions, Assumptions & Failure Behavior](docs/DESIGN.md) - why the service is built
+  the way it is, what it assumes about its environment, and the full failure-mode table.
+- [Production Considerations](docs/PRODUCTION.md) - Kubernetes/Envoy/Istio integration for
+  unspoofable identity, hot-reloadable policy, and what else would change for production use.
