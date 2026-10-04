@@ -4,11 +4,15 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 
 	"github.com/paravkaushal/k8s-egress-policy-enforcer/internal/audit"
 	"github.com/paravkaushal/k8s-egress-policy-enforcer/internal/policy"
+	"github.com/paravkaushal/k8s-egress-policy-enforcer/internal/proxy"
 )
+
+const PORT = ":8080"
 
 func main() {
 	fmt.Println("Hello World")
@@ -20,6 +24,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	_ = policy.NewEngine(cfg)
-	_ = audit.New(os.Stdout)
+	engine := policy.NewEngine(cfg)
+	auditLogger := audit.New(os.Stdout)
+	handler := proxy.NewHandler(engine, auditLogger)
+
+	mux := http.NewServeMux()
+	mux.Handle("/proxy", handler)
+
+	srv := &http.Server{
+		Addr:    PORT,
+		Handler: mux,
+	}
+
+	if err := srv.ListenAndServe(); err != nil {
+		slog.Error("server error", "error", err)
+		os.Exit(1)
+	}
+
 }
